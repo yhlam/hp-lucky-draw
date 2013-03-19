@@ -1,4 +1,28 @@
 /**
+ * Hardcoded Result
+ */
+function Result(large, small) {
+    this.large_wheel = large;
+    this.small_wheel = small;
+}
+
+var round = 0;
+
+var RESULTS = [
+    new Result(16,  2), new Result(27, 12), new Result( 3,  7), new Result(30,  4), new Result(12,  5),
+    new Result( 4,  2), new Result(29,  7), new Result(23, 10), new Result( 1, 11), new Result(24,  4),
+    new Result(31,  3), new Result(20,  7), new Result(28,  3), new Result(19,  8), new Result( 2,  2),
+    new Result( 5,  9), new Result(21, 10), new Result(18,  1), new Result( 6, 11), new Result( 9, 12),
+    new Result( 7,  3), new Result(17,  6), new Result(32,  5), new Result( 8,  8), new Result(26,  2),
+    new Result(10,  1), new Result(15,  3), new Result(22,  2), new Result(13,  5), new Result(11,  7),
+    new Result(25,  9), new Result(14, 11), new Result( 5, 10), new Result(16, 12), new Result(20,  3),
+    new Result( 1,  5), new Result( 3,  9), new Result(27,  3), new Result(15,  7), new Result( 8, 11),
+    new Result(11, 12), new Result(19,  9), new Result( 6, 10), new Result(17,  4), new Result(14,  9),
+    new Result( 9,  6), new Result(18,  6), new Result(25,  1), new Result(21,  8), new Result(10,  2),
+];
+
+
+/**
  * Position and scale of image on start and resize
  */
 var heights = {}; // Map of ID to original height
@@ -71,7 +95,8 @@ $('#owl').hover(function(e) {
 });
 
 
-/* Constructor of Wheel
+/**
+ * Constructor of Wheel
  * id: ID of the wheel element
  * slice_num: Number of slice in the wheel
  * time_quantum: time interval to update position of wheel
@@ -108,6 +133,9 @@ function Wheel(id, slice_num, time_quantum, friction_sec, minimum_friction_sec, 
             this.omega = this.omega_base + (Math.random() - 0.5) * this.omega_var;
             this.complete = false;
 
+            /**
+             * Simulation
+             */
             var sim_omega = this.omega;
             var sim_theta = this.theta;
             while(sim_omega>0) {
@@ -116,6 +144,26 @@ function Wheel(id, slice_num, time_quantum, friction_sec, minimum_friction_sec, 
             }
 
             var effective_theta = sim_theta >= 0 ? sim_theta % 360 : (-sim_theta) % 360;
+
+            // Handle the pre-set results
+            if(round < RESULTS.length) {
+                var target = RESULTS[round];
+                if(target) {
+                    var target_slice = target[this.id];
+                    var slice;
+                    if(this.clockwise) {
+                        slice = slice_num - Math.floor((effective_theta + this.slice_degree / 2.0) / this.slice_degree) + 1;
+                    }
+                    else {
+                        slice = Math.floor((effective_theta + this.slice_degree / 2.0) / this.slice_degree) + 1;
+                    }
+                    if(slice != target_slice) {
+                        this.theta -= this.slice_degree * (target_slice - slice);
+                    }
+                }
+            }
+
+            // Make sure the wheel stop as center of a slice
             var center_deviation = effective_theta % this.slice_degree;
             if(center_deviation > this.lower_safe_boundary && center_deviation < this.upper_safe_boundary) {
                 var boundary = (this.lower_safe_boundary + this.upper_safe_boundary) / 2;
@@ -158,7 +206,7 @@ function Wheel(id, slice_num, time_quantum, friction_sec, minimum_friction_sec, 
 }
 
 var large_wheel = new Wheel('large_wheel', 32, 30, 1.2, 0.5, 250, 90, false, 0.5);
-var small_wheel = new Wheel('small_wheel', 12, 30, 3, 0.5, 360, 90, true, 0.5);
+var small_wheel = new Wheel('small_wheel', 12, 30, 3, 0.5, 360, 90, true, 0.4);
 
 $('#owl').click(function () {
     if(large_wheel.rotating || small_wheel.rotating) {
@@ -167,8 +215,12 @@ $('#owl').click(function () {
     }
     else {
         if(large_wheel.complete == small_wheel.complete) {
+            var increase_round = large_wheel.complete;
             large_wheel.rotate();
             small_wheel.rotate();
+            if(increase_round) {
+                round++;
+            }
         }
         else if(!large_wheel.complete) {
             large_wheel.rotate();

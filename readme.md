@@ -5,6 +5,7 @@ Introduction
 ------------
 
 This is a lucky draw with Harry Potter theme written by Javascript, CSS and HTML.
+It suports pre-set results.
 
 License
 -------
